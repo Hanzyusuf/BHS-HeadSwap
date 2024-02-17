@@ -39,6 +39,14 @@ if __name__ == "__main__":
     src_path = './images/src/yusuf.png'
     tgt_path = './images/src/robert.png'
 
+    # Check if source and target files exist, show error and exit if either not found
+    if not (os.path.exists(src_path)):
+        print(f"Error: Source file does not exist.\nNo file exists with path: {src_path}")
+        sys.exit(1)
+    elif not (os.path.exists(tgt_path)):
+        print(f"Error: Target file does not exist.\nNo file exists with path: {tgt_path}")
+        sys.exit(1)
+
     # create output file path
     save_base = './images/result'
     img_name = os.path.splitext(os.path.basename(src_path))[0] + '-' + os.path.splitext(os.path.basename(tgt_path))[0] + ".png"

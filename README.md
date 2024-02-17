@@ -18,8 +18,13 @@ clone and cd into repo
 - git clone https://github.com/Hanzyusuf/BHS-HeadSwap.git
 - cd BHS-HeadSwap
 
-install pip packages:
-- pip install -r requirements.txt
+#### --- Install PIP packages:
+  
+_if cuda available:_
+- pip install -r requirements_cuda.txt
+  
+_if cuda not available and want to use cpu:_
+- pip install -r requirements_cpu.txt
 
 install nvdiffrast:
 - git clone https://github.com/NVlabs/nvdiffrast
