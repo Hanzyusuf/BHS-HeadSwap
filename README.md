@@ -30,6 +30,9 @@ remove nvdiffrast folder as it is irrelevant now:
 - cd ../
 - rm -r nvdiffrast
 
+install ffmpeg, c++ redist and build tools:
+- [instructions can be followed from this page](https://github.com/s0md3v/roop/wiki/1.3-Setup-Windows)
+
 setup pretrained_models dir
 - mkdir pretrained_models
 - setup the **_pretrained_models_** [exactly as done in this repo](https://github.com/LeslieZhoa/HeadSwap), no need to follow rest of the things there
