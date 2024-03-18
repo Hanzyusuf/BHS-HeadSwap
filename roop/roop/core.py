@@ -226,6 +226,7 @@ def runCL(source_path: str, target_path: str, output_path: str) -> None:
     roop.globals.source_path = source_path
     roop.globals.target_path = target_path
     roop.globals.output_path = output_path
+    
     roop.globals.headless = True
 
     if not pre_check():

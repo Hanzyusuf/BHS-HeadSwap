@@ -1,16 +1,42 @@
 import os
 import sys
+import subprocess
 import cv2
+import argparse
 
-sys.path.append('./HeadSwap')
+# Determine the absolute path of the directory containing main.py
+script_dir = os.path.dirname(os.path.abspath(__file__))
+
+headswap_dir = os.path.join(script_dir, 'HeadSwap')
+roop_dir = os.path.join(script_dir, 'roop')
+sys.path.append(headswap_dir)
+sys.path.append(roop_dir)
+
 from inference import Infer
-
-sys.path.append('./roop')
 from roop import core
 
+def parseArgs():
+    parser = argparse.ArgumentParser(description='Process images.')
 
-def swap_head(src_img_path, tgt_img_path, save_path):
-    # Create an instance of the Infer class
+    # Add arguments
+    parser.add_argument('--source', type=str, help='Path to the source image file')
+    parser.add_argument('--target', type=str, help='Path to the target image file')
+    parser.add_argument('-o', '--output', type=str, help='Path to the output image file')
+    parser.add_argument('--alsoswapface', action='store_true', help='Whether to swap face after head swap or not (default: False)')
+    parser.add_argument('--swap', choices=['head', 'face'], default='head', help="Specify whether to swap 'head' or 'face' (default: 'head')")
+
+    # Parse arguments
+    args = parser.parse_args()
+
+    # Check if required arguments are provided
+    if not (args.source and args.target and args.output):
+        parser.error("Please provide source, target, and output paths.")
+        return None
+    
+    return args
+
+
+def swap_head(src_img_path, tgt_img_path, img_output_path):
     model = Infer(
         'pretrained_models/epoch_00190_iteration_000400000_checkpoint.pt',
         'pretrained_models/Blender-401-00012900.pth',
@@ -23,41 +49,87 @@ def swap_head(src_img_path, tgt_img_path, save_path):
     generated_image = model.run_single(src_img_path, tgt_img_path, crop_align=True, cat=False)
 
     if generated_image is not None:
-        cv2.imwrite(save_path, generated_image)
-        print(f"Image saved successfully at {save_path}")
+        cv2.imwrite(img_output_path, generated_image)
+        print(f"Image saved successfully at {img_output_path}")
     else:
         print("Error: Generated image is None.")
 
 
-def swap_face(src_img_path, tgt_img_path, save_path):
-    core.runCL(source_path=src_img_path, target_path=tgt_img_path, output_path=save_path)
+def swap_face(src_img_path, tgt_img_path, img_output_path):
+    global script_dir
 
+    base_command = [
+        "python",
+        #"./roop/run.py",
+        f"{os.path.join(script_dir,'roop/run.py')}",
+        "--execution-provider", "cuda",
+        "--frame-processor", "face_swapper", "face_enhancer",
+        "--source", src_img_path,
+        "--target", tgt_img_path,
+        "-o", img_output_path
+    ]
 
-if __name__ == "__main__":
+    full_command = base_command
 
-    # set input source and target image paths
-    src_path = './images/src/yusuf.png'
-    tgt_path = './images/src/robert.png'
+    # Run the subprocess with the activated virtual environment
+    process = subprocess.Popen(full_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
 
-    # Check if source and target files exist, show error and exit if either not found
-    if not (os.path.exists(src_path)):
-        print(f"Error: Source file does not exist.\nNo file exists with path: {src_path}")
-        sys.exit(1)
-    elif not (os.path.exists(tgt_path)):
-        print(f"Error: Target file does not exist.\nNo file exists with path: {tgt_path}")
-        sys.exit(1)
+    # Capture and print output and errors
+    stdout, stderr = process.communicate()
+    if stdout:
+        print("Output:", stdout)
+    if stderr:
+        print("Errors:", stderr)
 
-    # create output file path
-    save_base = './images/result'
-    img_name = os.path.splitext(os.path.basename(src_path))[0] + '-' + os.path.splitext(os.path.basename(tgt_path))[0] + ".png"
-    output_path = os.path.join(save_base, img_name)
+    # Check the return code
+    if process.returncode != 0:
+        print("Error occurred while running the subprocess in swap_face function !")
+    
 
-    # Check if src_path filename contains "bride"
-    if 'bride' in os.path.basename(src_path):
-        swap_head(src_path, tgt_path, output_path)
-        output_path_refined = os.path.join(save_base, img_name + " + faceswap.png")
-        swap_face(src_path, output_path, output_path_refined)
-        print("swapped head successfully!")
+# check for args
+args = parseArgs()
+
+if(args == None):
+    print(f"Error: Source, target and/or output paths not provided!")
+    sys.exit(1)
+
+# Check if source and target files exist, show error and exit if either not found
+if not (os.path.exists(args.source)):
+    print(f"Error: Source file does not exist.\nNo file exists with path: {args.source}")
+    sys.exit(1)
+elif not (os.path.exists(args.target)):
+    print(f"Error: Target file does not exist.\nNo file exists with path: {args.target}")
+    sys.exit(1)
+
+# If swap argument is 'head', perform head swap
+if args.swap == 'head':
+    # Perform head swap
+    print(f"performing HeadSwap ...")
+    swap_head(args.source, args.target, args.output)
+    
+    # If 'alsoswapface' is True, modify output filename for head and swap face to original output
+    if args.alsoswapface:
+        print(f"performing FaceSwap over HeadSwap output ...")
+        
+        print(f"renaming HeadSwap output file to prevent conflict when performing FaceSwap ...")
+        # Create a temporary filename for the output of head swap
+        headswap_output_temp = args.output + ".headswap_temp.png"
+        # Rename the output file of head swap
+        os.rename(args.output, headswap_output_temp)
+        
+        # Perform face swap on the output of head swap
+        swap_face(args.source, headswap_output_temp, args.output)
+
+        print(f"deleting HeadSwap output ...")
+        os.remove(headswap_output_temp)  # Remove the headswap original output file
+
+        print(f"Operation completed ! : HeadSwap with FaceSwap")
+
     else:
-        swap_face(src_path, tgt_path, output_path)
-        print("swapped face successfully!")
+        print(f"Operation completed ! : HeadSwap")
+
+# If swap argument is 'face', perform face swap only
+elif args.swap == 'face':
+    # Perform face swap
+    swap_face(args.source, args.target, args.output)
+    print(f"Operation completed ! : FaceSwap")

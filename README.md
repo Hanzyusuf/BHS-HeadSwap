@@ -1,6 +1,6 @@
 # Head and Face Swapping Software
 
-This is a simple Python program that leverages two different libraries for head and face swapping tasks. It utilizes the 'roop' library for face swapping and the 'HeadSwap' library for head swapping.
+This is a simple Python program that leverages two different libraries for head and face swapping tasks. It utilizes the [**'roop'**](https://github.com/s0md3v/roop) library for face swapping and the [**'HeadSwap'**](https://github.com/LeslieZhoa/HeadSwap) library for head swapping.
 
 ## Features
 
@@ -43,5 +43,29 @@ setup pretrained_models dir
 - setup the **_pretrained_models_** [exactly as done in this repo](https://github.com/LeslieZhoa/HeadSwap), no need to follow rest of the things there
 
 ### **--- How To Use ---**
-- modify main.py by setting the values of **src_path** and **tgt_path** as desired.
-- run in terminal: **python main.py**
+To utilize the swapping functionalities of this program, you can run the `main.py` script with the following command line arguments:
+
+- `--source`: Path to the source image file.
+- `--target`: Path to the target image file.
+- `-o, --output`: Path to the output image file.
+- `--alsoswapface`: Optional argument to indicate whether to swap the face after head swapping. If provided, the program will perform face swapping on the output of head swapping. (default: False)
+- `--swap`: Specify whether to perform head swapping (`head`) or face swapping (`face`). The default value is `head`.
+
+### **Example Usage:**
+
+To perform head swapping:
+
+`python main.py --source "path/to/source/image.png" --target "path/to/target/image.png" -o "output/image.png" --swap head`
+
+To perform face swapping:
+
+`python main.py --source "path/to/source/image.png" --target "path/to/target/image.png" -o "output/image.png" --swap face`
+
+To perform both head and face swapping:
+
+`python main.py --source "path/to/source/image.png" --target "path/to/target/image.png" -o "output/image.png" --swap head --alsoswapface`
+
+### **Note:**
+- Ensure that the paths to source and target images are valid.
+- If virtual environment is activated, the required packages will be automatically used from the virtual environment. Otherwise, ensure that the required packages are installed in your Python environment.
+- For detailed instructions on installation and setup, please refer to the Installation section above.

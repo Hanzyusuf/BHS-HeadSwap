@@ -2,3 +2,7 @@
 pretrained_models
 temp
 __pycache__
+venv
+images
+requirements_test.txt
+gfpgan
